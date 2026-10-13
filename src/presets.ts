@@ -14,8 +14,8 @@ const TRANSPARENT = combineRgb(0, 0, 0, 0)
 const PLAYING = combineRgb(0, 255, 0)
 /** Percent of the element height; matches the 14pt text of the simple variant */
 const LABEL_SIZE = 23
-/** Percent of the button size, about 6 px on a 72 px button */
-const FRAME_WIDTH = 8
+/** Percent of the button size, about 3 px on a 72 px button */
+const FRAME_WIDTH = 4
 
 export function UpdatePresets(self: ModuleInstance): void {
 	const presets: CompanionPresetDefinitions<ModuleSchema> = {}
