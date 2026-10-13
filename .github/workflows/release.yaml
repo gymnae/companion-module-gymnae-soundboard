@@ -8,8 +8,31 @@ permissions:
   contents: read
 
 jobs:
+  version:
+    name: Check version
+    if: ${{ !contains(github.repository, 'companion-module-template-') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          persist-credentials: false
+      - name: Tag matches package.json
+        # The package takes its version from package.json, while the asset is named after the tag
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [ "${TAG#v}" != "$VERSION" ]; then
+            echo "::error::Release tag $TAG does not match version $VERSION in package.json"
+            exit 1
+          fi
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+
   package:
     name: Package module
+    needs: version
 
     # The template itself cannot be packaged, as its manifest still holds placeholders
     if: ${{ !contains(github.repository, 'companion-module-template-') }}
