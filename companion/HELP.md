@@ -7,6 +7,7 @@ Plays sounds on a [Mumble Soundboard](https://github.com/gymnae/mumblesoundboard
 - **Soundboard address**: base URL of the soundboard web UI, e.g. `http://192.168.1.20:5000`. `http://` is added if missing. A sub-path behind a reverse proxy works too (`https://example.org/board`).
 - **Order sounds by**: _Alphabet_ or _Number of plays_. This sets the order of the sound lists in actions, feedbacks and presets. With _Number of plays_, the lists also show the play counts.
 - **Metadata refresh**: how often the sound list, play counts and covers are re-read (default 30 s).
+- **Cover size**: covers and stream thumbnails are requested scaled down to fit this many pixels (default 72, Companion's standard button size). Raise it if covers look soft on larger buttons. Changing it refetches the covers. Soundboard versions without the `?size=` option ignore it and send full-size covers.
 - **Now-playing poll**: how often `/status` is read for the _playing_ feedbacks and the now-playing variables (default 1000 ms, 0 = off).
 
 ### Quick start
@@ -37,4 +38,4 @@ Open **Presets → Sounds** and drag a sound onto a button. The button plays the
 
 When you place a button, the module loads that sound's metadata and cover immediately. After that, every metadata refresh re-checks them with an ETag request, so a changed cover appears automatically.
 
-Sound names, play counts and the covers of sounds on your buttons are stored in the connection's configuration. This copy is limited to about 100 covers. If the soundboard is unreachable, including at Companion startup, the sound lists and button images come from this copy. The connection shows a warning, and pressing a button logs an error until the soundboard is back. Changing the soundboard address clears the copy.
+Sound names, play counts and the covers of sounds on your buttons are stored in the connection's configuration. This copy holds up to 256 covers. If the soundboard is unreachable, including at Companion startup, the sound lists and button images come from this copy. The connection shows a warning, and pressing a button logs an error until the soundboard is back. Changing the soundboard address clears the copy.

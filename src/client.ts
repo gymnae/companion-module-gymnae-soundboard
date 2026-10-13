@@ -121,10 +121,13 @@ export class SoundboardClient {
 
 	/**
 	 * Fetches an image, revalidating with the previous ETag.
+	 * `size` asks the soundboard to scale it down to fit size×size pixels (older versions ignore it).
 	 * The soundboard answers with its generic fallback cover (`X-Cover-Source: default`) when a file
 	 * has no artwork; that is reported as `none` so buttons keep their own style.
 	 */
-	async getImage(path: string, etag?: string | null): Promise<ImageResult> {
+	async getImage(path: string, options: { etag?: string | null; size?: number } = {}): Promise<ImageResult> {
+		const { etag, size } = options
+		if (size) path += `${path.includes('?') ? '&' : '?'}size=${Math.round(size)}`
 		const response = await this.#get(path, etag ? { 'If-None-Match': etag } : undefined)
 		if (response.status === 304) return { kind: 'unchanged' }
 		if (response.headers.get('x-cover-source') === 'default') {

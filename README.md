@@ -22,10 +22,10 @@ To run it in Companion, set the _developer modules path_ in Companion's settings
 | -------------------------------- | --------------------------------------------------------------------------- |
 | Sound list, tags, play counts    | `GET /meta`                                                                 |
 | Metadata of a newly placed sound | `GET /meta/<file>`                                                          |
-| Cover (ETag revalidated)         | `GET /cover/<file>`; `X-Cover-Source: default` means no cover               |
+| Cover (ETag revalidated)         | `GET /cover/<file>?size=N`; `X-Cover-Source: default` means no cover        |
 | Play                             | `GET <play_url>` (`/play/<file>`), or `GET /play_url?url=` for http(s) URLs |
 | Stop / volume                    | `GET /stop`, `GET /volume/{local,remote}/<0-100>`                           |
-| Now playing                      | `GET /status`                                                               |
+| Now playing                      | `GET /status`, `GET /now_playing/thumbnail?…&size=N`                        |
 
 ## Layout
 

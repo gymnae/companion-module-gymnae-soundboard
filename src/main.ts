@@ -45,6 +45,7 @@ function withDefaults(config: ModuleConfig): ModuleConfig {
 		metaInterval: num(config.metaInterval, 30, 5),
 		statusInterval: num(config.statusInterval, 1000, 0),
 		timeout: num(config.timeout, 3000, 250),
+		coverSize: Math.min(1024, Math.round(num(config.coverSize, 72, 16))),
 	}
 }
 
@@ -94,7 +95,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 
 	async init(config: ModuleConfig): Promise<void> {
 		this.config = withDefaults(config)
-		this.cache.load(this.config.cache, normalizeBaseUrl(this.config.url) ?? '')
+		this.cache.load(this.config.cache, normalizeBaseUrl(this.config.url) ?? '', this.config.coverSize)
 		this.#savedCache = JSON.stringify(this.config.cache ?? null)
 		this.#lastUpdate = this.cache.updated
 		this.updateVariableDefinitions()
@@ -113,9 +114,13 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		const base = normalizeBaseUrl(this.config.url) ?? ''
 		if (base !== this.cache.baseUrl) {
 			// Another soundboard: its sounds and covers are not ours
-			this.cache.load(undefined, base)
+			this.cache.load(undefined, base, this.config.coverSize)
 			this.#lastUpdate = 0
 			this.#savedCache = ''
+		} else if (this.config.coverSize !== this.cache.coverSize) {
+			// Refetched at the new size by the refresh that #start() runs
+			this.cache.covers.clear()
+			this.cache.coverSize = this.config.coverSize
 		}
 		this.#start()
 		this.#scheduleSave()
@@ -328,7 +333,10 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		}
 		let result
 		try {
-			result = await client.getImage(sound?.cover_url || soundPath('/cover', name), previous?.etag)
+			result = await client.getImage(sound?.cover_url || soundPath('/cover', name), {
+				etag: previous?.etag,
+				size: this.config.coverSize,
+			})
 		} catch (e) {
 			if (e instanceof HttpError && e.status === 404) result = { kind: 'none' as const }
 			else throw e
@@ -465,7 +473,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		const client = this.client
 		if (!client) return
 		try {
-			const result = await client.getImage(url)
+			const result = await client.getImage(url, { size: this.config.coverSize })
 			if (this.#streamImage?.url !== url) return
 			this.#streamImage = { url, data: result.kind === 'image' ? result.data : null }
 			this.checkFeedbacks('now_playing_cover')

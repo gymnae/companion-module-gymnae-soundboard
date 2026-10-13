@@ -48,15 +48,27 @@ export function createFakeSoundboard(prefix = '') {
 			const n = path.slice(6)
 			return state.sounds[n] ? json(info(n)) : json({ error: 'File not found' }, 404)
 		}
+		// ?size=N as in the soundboard: scaled image, size part of the ETag, PNG vinyl as fallback
+		const size = url.searchParams.get('size')
+		if (size !== null && !/^\d+$/.test(size)) return res.writeHead(400).end('Invalid size')
+		const scaled = (img) => (size ? Buffer.concat([img, Buffer.from(`size=${size}`)]) : img)
+		if (path === '/now_playing/thumbnail') {
+			if (!state.stream)
+				return res.writeHead(200, { 'content-type': 'image/svg+xml', 'x-cover-source': 'default' }).end('<svg/>')
+			return res.writeHead(200, { 'content-type': 'image/png', 'x-cover-source': 'embedded' }).end(scaled(png(5)))
+		}
 		if (path.startsWith('/cover/')) {
 			const s = state.sounds[path.slice(7)]
 			if (!s) return res.writeHead(404).end()
-			if (!s.cover)
+			if (!s.cover) {
+				if (size) return res.writeHead(200, { 'content-type': 'image/png', 'x-cover-source': 'default' }).end(png(0))
 				return res.writeHead(200, { 'content-type': 'image/svg+xml', 'x-cover-source': 'default' }).end('<svg/>')
-			if (req.headers['if-none-match'] === s.etag) return res.writeHead(304).end()
+			}
+			const etag = size ? `${s.etag}-${size}` : s.etag
+			if (req.headers['if-none-match'] === etag) return res.writeHead(304).end()
 			return res
-				.writeHead(200, { 'content-type': 'image/png', etag: s.etag, 'x-cover-source': 'embedded' })
-				.end(s.cover)
+				.writeHead(200, { 'content-type': 'image/png', etag, 'x-cover-source': 'embedded' })
+				.end(scaled(s.cover))
 		}
 		if (path.startsWith('/play/')) {
 			const n = path.slice(6)
@@ -72,7 +84,7 @@ export function createFakeSoundboard(prefix = '') {
 		}
 		if (path === '/status')
 			return json({
-				playing: !!state.playing,
+				playing: !!(state.playing || state.stream),
 				now_playing: {
 					sound: state.playing
 						? {
@@ -85,7 +97,9 @@ export function createFakeSoundboard(prefix = '') {
 								meta_url: '',
 							}
 						: null,
-					stream: null,
+					stream: state.stream
+						? { title: state.stream, link: '', has_thumbnail: true, thumbnail_url: '/now_playing/thumbnail?v=1t' }
+						: null,
 				},
 			})
 		res.writeHead(404).end()

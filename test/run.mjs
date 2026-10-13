@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict'
 import { createFakeSoundboard } from './fake-soundboard.mjs'
 const { default: Module } = await import('../dist/main.js')
+const { SoundboardClient } = await import('../dist/client.js')
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 const until = async (fn, what, ms = 3000) => {
 	const t = Date.now()
@@ -35,12 +36,16 @@ await until(() => m.calls.some((c) => c[0] === 'checkById' && c.includes('fb1'))
 r = m.feedbacks.cover.callback({ id: 'fb1', options: { sound: 'zebra.mp3' } })
 assert.equal(Buffer.from(r.png64, 'base64').subarray(0, 4).toString('hex'), '89504e47')
 assert.ok(sb.state.requests.includes('/meta/zebra.mp3'))
+assert.ok(sb.state.requests.includes('/cover/zebra.mp3?size=72'), 'cover requested at button size')
 ok('new cover feedback polls /meta/<file> + /cover/<file> and gets png64')
 // no cover → no image, button keeps own style
 m.feedbacks.cover.callback({ id: 'fb2', options: { sound: 'b c.mp3' } })
 await wait(200)
 assert.deepEqual(m.feedbacks.cover.callback({ id: 'fb2', options: { sound: 'b c.mp3' } }), {})
 ok('sound without embedded cover returns no image (default SVG not used)')
+const client = new SoundboardClient(`http://127.0.0.1:${sb.port}`, 1000)
+assert.equal((await client.getImage('/cover/b%20c.mp3', { size: 72 })).kind, 'none')
+ok('sized fallback (PNG vinyl, X-Cover-Source: default) is also treated as "no cover"')
 
 // 3. cover change at runtime is picked up on the next metadata refresh (ETag revalidation)
 const before = m.coverFor('zebra.mp3')
@@ -53,7 +58,7 @@ assert.ok(m.calls.some((c) => c[0] === 'checkById' && c.includes('fb1')))
 const n304 = sb.state.requests.length
 const redraws = m.calls.length
 await m.refreshMeta()
-assert.ok(sb.state.requests.slice(n304).includes('/cover/zebra.mp3'))
+assert.ok(sb.state.requests.slice(n304).includes('/cover/zebra.mp3?size=72'))
 assert.equal(
 	m.calls.filter((c) => c[0] === 'checkById').length,
 	m.calls.slice(0, redraws).filter((c) => c[0] === 'checkById').length,
@@ -85,11 +90,33 @@ await m.refreshMeta()
 assert.deepEqual(choices(m), ['zebra.mp3', 'airhorn.mp3', 'b c.mp3'])
 ok('sort by number of plays: ' + m.actions.play.options[0].choices.map((c) => c.label).join(' | '))
 
+// 5b. cover size: changing it refetches covers at the new size; stream thumbnails are sized too
+m.calls.length = 0
+await m.configUpdated({ ...base, sort: 'plays', coverSize: 96 })
+await until(
+	() =>
+		Buffer.from(m.coverFor('zebra.mp3') ?? '', 'base64')
+			.toString()
+			.endsWith('size=96'),
+	'cover at 96',
+)
+assert.ok(sb.state.requests.includes('/cover/zebra.mp3?size=96'))
+assert.ok(m.calls.some((c) => c[0] === 'checkById' && c.includes('fb1')))
+ok('changing "Cover size" refetches covers with ?size=96 and redraws the buttons')
+sb.state.stream = 'YouTube: test'
+sb.state.playing = null
+await until(() => sb.state.requests.includes('/now_playing/thumbnail?v=1t&size=96'), 'thumbnail request')
+await until(() => !!m.feedbacks.now_playing_cover.callback({ options: { source: 'stream' } }).png64, 'thumbnail')
+assert.equal(m.vars.stream_title, 'YouTube: test')
+sb.state.stream = null
+ok('stream thumbnail requested with &size=96 next to its existing ?v= parameter')
+
 // 6. cache persisted in config
 await m.destroy()
 const saved = m.saved
 assert.equal(saved.cache.sounds.length, 3)
 assert.ok(saved.cache.covers['zebra.mp3'] && !saved.cache.covers['b c.mp3'])
+assert.equal(saved.cache.coverSize, 96)
 ok(
 	`cache saved via saveConfig (${saved.cache.sounds.length} sounds, ${Object.keys(saved.cache.covers).length} covers, ${JSON.stringify(saved.cache).length} bytes)`,
 )
@@ -103,6 +130,12 @@ assert.deepEqual(choices(m), ['zebra.mp3', 'airhorn.mp3', 'b c.mp3'])
 assert.ok(m.feedbacks.cover.callback({ id: 'x', options: { sound: 'zebra.mp3' } }).png64)
 await until(() => m.status?.[0] === 'connection_failure', 'offline status')
 ok(`offline start: sounds + covers from cache, status "${m.status[1]}"`)
+const other = new Module({})
+await other.init({ ...saved, coverSize: saved.coverSize + 8 })
+assert.equal(choices(other).length, 3)
+assert.equal(other.coverFor('zebra.mp3'), null)
+await other.destroy()
+ok('cached covers of another size are dropped on load, cached sounds kept')
 await assert.rejects(m.actions.play.callback({ options: { sound: 'zebra.mp3' } }))
 ok('play while offline reports an error instead of crashing')
 // UI edit that drops the hidden cache field keeps the cache

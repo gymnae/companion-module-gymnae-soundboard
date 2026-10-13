@@ -9,6 +9,7 @@ export type ModuleConfig = {
 	metaInterval: number
 	statusInterval: number
 	timeout: number
+	coverSize: number
 	/**
 	 * Not shown as a field: the last known sounds and the covers of sounds placed on buttons.
 	 * Kept in the connection config so buttons survive a restart while the soundboard is unreachable.
@@ -70,6 +71,17 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			default: 1000,
 			min: 0,
 			max: 60000,
+		},
+		{
+			type: 'number',
+			id: 'coverSize',
+			label: 'Cover size (pixels)',
+			description:
+				"Covers are fetched scaled down to fit this many pixels. 72 is Companion's standard button size; raise it if covers look soft on larger buttons.",
+			width: 6,
+			default: 72,
+			min: 16,
+			max: 1024,
 		},
 		{
 			type: 'number',

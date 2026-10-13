@@ -19,13 +19,16 @@ export type CachedCover = ImageData & { fetched: number }
 export type PersistedCache = {
 	version: 1
 	baseUrl: string
+	/** Size the covers were requested at; covers of another size are dropped on load */
+	coverSize?: number
 	updated: number
 	sounds: CachedSound[]
 	covers: { [name: string]: CachedCover }
 }
 
 // Covers are stored in the connection config, so keep that bounded: enough for a few full surfaces.
-const MAX_PERSISTED_COVERS = 96
+// Button-sized covers are a few KB each; the length limits only matter for soundboards that ignore ?size=.
+const MAX_PERSISTED_COVERS = 256
 const MAX_PERSISTED_COVER_LENGTH = 1024 * 1024 // base64 characters per cover
 const MAX_PERSISTED_TOTAL_LENGTH = 8 * 1024 * 1024
 
@@ -55,18 +58,21 @@ export class SoundCache {
 	readonly sounds = new Map<string, CachedSound>()
 	readonly covers = new Map<string, CachedCover>()
 	baseUrl = ''
+	coverSize = 0
 	updated = 0
 
-	load(data: PersistedCache | undefined, baseUrl: string): void {
+	load(data: PersistedCache | undefined, baseUrl: string, coverSize: number): void {
 		this.sounds.clear()
 		this.covers.clear()
 		this.baseUrl = baseUrl
+		this.coverSize = coverSize
 		this.updated = 0
 		if (!data || data.version !== 1 || data.baseUrl !== baseUrl) return
 		this.updated = data.updated || 0
 		for (const sound of data.sounds ?? []) {
 			if (sound && typeof sound.name === 'string') this.sounds.set(sound.name, sound)
 		}
+		if (data.coverSize !== coverSize) return
 		for (const [name, cover] of Object.entries(data.covers ?? {})) {
 			if (cover && typeof cover.data === 'string') this.covers.set(name, cover)
 		}
@@ -134,6 +140,7 @@ export class SoundCache {
 		return {
 			version: 1,
 			baseUrl: this.baseUrl,
+			coverSize: this.coverSize,
 			updated: this.updated,
 			sounds: [...this.sounds.values()],
 			covers,
