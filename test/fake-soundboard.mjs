@@ -9,6 +9,7 @@ export function createFakeSoundboard(prefix = '') {
 			'b c.mp3': { title: null, count: 7, cover: null },
 		},
 		requests: [],
+		delay: 0,
 		playing: null,
 	}
 	const info = (name) => {
@@ -29,7 +30,8 @@ export function createFakeSoundboard(prefix = '') {
 			meta_url: `/meta/${e}`,
 		}
 	}
-	const server = http.createServer((req, res) => {
+	// state.delay (ms) slows every response down, like a busy server
+	const handle = (req, res) => {
 		let url = new URL(req.url, 'http://x')
 		state.requests.push(req.url)
 		let path = decodeURIComponent(url.pathname)
@@ -103,6 +105,9 @@ export function createFakeSoundboard(prefix = '') {
 				},
 			})
 		res.writeHead(404).end()
-	})
+	}
+	const server = http.createServer((req, res) =>
+		state.delay ? setTimeout(() => handle(req, res), state.delay) : handle(req, res),
+	)
 	return new Promise((r) => server.listen(0, '127.0.0.1', () => r({ server, state, port: server.address().port })))
 }

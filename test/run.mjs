@@ -92,6 +92,11 @@ ok('sort by number of plays: ' + m.actions.play.options[0].choices.map((c) => c.
 
 // 5b. cover size: changing it refetches covers at the new size; stream thumbnails are sized too
 m.calls.length = 0
+// Two quick config changes against a slow server: the second must not wait for the first's (now stale) refresh
+sb.state.playing = null // otherwise the now-playing poll reloads zebra's cover and hides the problem
+await until(() => !m.nowPlaying?.sound, 'nothing playing')
+sb.state.delay = 300
+await m.configUpdated({ ...base, sort: 'plays', coverSize: 72 })
 await m.configUpdated({ ...base, sort: 'plays', coverSize: 96 })
 await until(
 	() =>
@@ -102,7 +107,8 @@ await until(
 )
 assert.ok(sb.state.requests.includes('/cover/zebra.mp3?size=96'))
 assert.ok(m.calls.some((c) => c[0] === 'checkById' && c.includes('fb1')))
-ok('changing "Cover size" refetches covers with ?size=96 and redraws the buttons')
+ok('changing "Cover size" refetches covers with ?size=96 and redraws the buttons, even during a running refresh')
+sb.state.delay = 0
 sb.state.stream = 'YouTube: test'
 sb.state.playing = null
 await until(() => sb.state.requests.includes('/now_playing/thumbnail?v=1t&size=96'), 'thumbnail request')

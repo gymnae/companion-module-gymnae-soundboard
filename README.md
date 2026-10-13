@@ -1,4 +1,4 @@
-# companion-module-gymnae-mumblesoundboard
+# companion-module-gymnae-soundboard
 
 [Bitfocus Companion](https://bitfocus.io/companion) module for the [Mumble Soundboard](https://github.com/gymnae/mumblesoundboard). It plays sounds and shows their embedded cover art on the buttons. User documentation is in [companion/HELP.md](companion/HELP.md).
 
@@ -11,10 +11,16 @@ corepack enable   # or install Yarn 4 another way (Node 26 no longer ships corep
 yarn install
 yarn build        # or `yarn dev` to rebuild on change
 yarn test         # runs the built module against a fake soundboard (test/)
-yarn package      # writes gymnae-mumblesoundboard-<version>.tgz to import into Companion
+yarn test:live https://soundboard.example.org   # read-only run against a real soundboard (never plays anything)
+yarn package      # writes gymnae-soundboard-<version>.tgz to import into Companion
 ```
 
-To run it in Companion, set the _developer modules path_ in Companion's settings to the folder that contains this checkout. See [Local modules](https://companion.free/for-developers/module-development/local-modules).
+## Installing in Companion
+
+Requires Companion 5.1 or newer.
+
+- **From the package:** on the _Modules_ page, use **Import module package** with the `.tgz` from `yarn package`. Don't use _Import offline module bundle_; that button only takes Bitfocus' multi-module offline bundles and reports "No modules found in bundle".
+- **From source, for development:** run `yarn install && yarn build` in the checkout first. Then set the _developer modules path_ in Companion's settings to the folder **above** the checkout. Companion looks for modules in its subfolders, so the checkout folder itself shows "Found 0 extra modules". See [Local modules](https://companion.free/for-developers/module-development/local-modules).
 
 ## Soundboard API used
 

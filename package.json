@@ -1,5 +1,5 @@
 {
-	"name": "gymnae-mumblesoundboard",
+	"name": "gymnae-soundboard",
 	"version": "0.1.0",
 	"main": "dist/main.js",
 	"type": "module",
@@ -12,12 +12,13 @@
 		"dev": "tsc -p tsconfig.build.json --watch",
 		"lint:raw": "eslint",
 		"lint": "run lint:raw .",
-		"test": "run build && node --import ./test/hooks.mjs test/run.mjs"
+		"test": "run build && node --import ./test/hooks.mjs test/run.mjs",
+		"test:live": "run build && node --import ./test/hooks.mjs test/live.mjs"
 	},
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/gymnae/companion-module-gymnae-mumblesoundboard.git"
+		"url": "git+https://github.com/gymnae/companion-module-gymnae-soundboard.git"
 	},
 	"engines": {
 		"node": "^26",

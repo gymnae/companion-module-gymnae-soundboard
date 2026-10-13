@@ -1,14 +1,14 @@
 {
 	"$schema": "../node_modules/@companion-module/base/assets/manifest.schema.json",
 	"type": "connection",
-	"id": "gymnae-mumblesoundboard",
-	"name": "gymnae-mumblesoundboard",
+	"id": "gymnae-soundboard",
+	"name": "gymnae-soundboard",
 	"shortname": "soundboard",
 	"description": "Trigger sounds on a Mumble Soundboard and show their cover art on buttons",
 	"version": "0.0.0",
 	"license": "MIT",
-	"repository": "git+https://github.com/gymnae/companion-module-gymnae-mumblesoundboard.git",
-	"bugs": "https://github.com/gymnae/companion-module-gymnae-mumblesoundboard/issues",
+	"repository": "git+https://github.com/gymnae/companion-module-gymnae-soundboard.git",
+	"bugs": "https://github.com/gymnae/companion-module-gymnae-soundboard/issues",
 	"maintainers": [
 		{
 			"name": "gymnae"
@@ -20,7 +20,7 @@
 		"apiVersion": "0.0.0",
 		"entrypoint": "../dist/main.js"
 	},
-	"legacyIds": [],
+	"legacyIds": ["gymnae-mumblesoundboard"],
 	"manufacturer": "gymnae",
 	"products": ["Mumble Soundboard"],
 	"keywords": ["soundboard", "mumble", "audio", "sfx", "matrix", "schnackn"]

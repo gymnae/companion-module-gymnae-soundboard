@@ -79,7 +79,8 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	#metaTimer: NodeJS.Timeout | undefined
 	#statusTimer: NodeJS.Timeout | undefined
 	#saveTimer: NodeJS.Timeout | undefined
-	#metaRunning: Promise<void> | null = null
+	/** The refresh in flight and the generation it belongs to; one from before a reconfigure does not count */
+	#metaRunning: { promise: Promise<void>; generation: number } | null = null
 	#statusRunning = false
 	#online: boolean | null = null
 	#offlineMessage = ''
@@ -378,12 +379,16 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 
 	/** Re-reads the sound list and play counts, and revalidates the covers of sounds on buttons */
 	async refreshMeta(force = false): Promise<void> {
-		if (!this.#metaRunning) {
-			this.#metaRunning = this.#doRefreshMeta(force).finally(() => {
-				this.#metaRunning = null
-			})
+		if (this.#metaRunning?.generation !== this.#generation) {
+			const running = {
+				generation: this.#generation,
+				promise: this.#doRefreshMeta(force).finally(() => {
+					if (this.#metaRunning === running) this.#metaRunning = null
+				}),
+			}
+			this.#metaRunning = running
 		}
-		return this.#metaRunning
+		return this.#metaRunning.promise
 	}
 
 	async #doRefreshMeta(force: boolean): Promise<void> {
