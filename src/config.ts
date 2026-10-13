@@ -2,10 +2,12 @@ import type { SomeCompanionConfigField } from '@companion-module/base'
 import type { PersistedCache } from './cache.js'
 
 export type SortOrder = 'alpha' | 'plays'
+export type NameSource = 'file' | 'title'
 
 export type ModuleConfig = {
 	url: string
 	sort: SortOrder
+	names: NameSource
 	metaInterval: number
 	statusInterval: number
 	timeout: number
@@ -50,6 +52,19 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			choices: [
 				{ id: 'alpha', label: 'Alphabet (A–Z)' },
 				{ id: 'plays', label: 'Number of plays (most first)' },
+			],
+		},
+		{
+			type: 'dropdown',
+			id: 'names',
+			label: 'Name sounds by',
+			description:
+				'Shown in the sound lists, on preset buttons and in the now-playing variable. Title tags are often placeholders like "Untitled Project".',
+			width: 6,
+			default: 'file',
+			choices: [
+				{ id: 'file', label: 'File name' },
+				{ id: 'title', label: 'Title tag (file name if none)' },
 			],
 		},
 		{

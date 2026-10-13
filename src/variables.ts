@@ -18,7 +18,7 @@ export function UpdateVariableDefinitions(self: ModuleInstance): void {
 		last_update: { name: 'Time of the last successful metadata refresh' },
 		playing: { name: 'Anything is playing' },
 		now_playing_name: { name: 'File name of the sound playing' },
-		now_playing_title: { name: 'Title of the sound playing' },
+		now_playing_title: { name: 'Name of the sound playing (file name or title tag, see "Name sounds by")' },
 		now_playing_artist: { name: 'Artist of the sound playing' },
 		stream_title: { name: 'Title of the running web stream' },
 	})

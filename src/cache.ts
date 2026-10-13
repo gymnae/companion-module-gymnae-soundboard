@@ -1,5 +1,5 @@
 import type { ImageData, SoundInfo } from './client.js'
-import type { SortOrder } from './config.js'
+import type { NameSource, SortOrder } from './config.js'
 
 /** What is remembered about a sound between restarts */
 export type CachedSound = {
@@ -45,9 +45,20 @@ function toCached(info: SoundInfo): CachedSound {
 	}
 }
 
-/** Title tag, or the file name without extension */
-export function displayName(sound: Pick<CachedSound, 'name' | 'title'>): string {
-	return sound.title?.trim() || sound.name.replace(/\.[^./]+$/, '')
+/** File name without extension, underscores as spaces so long names can wrap on buttons */
+export function fileLabel(name: string): string {
+	return (
+		name
+			.replace(/\.[^./]+$/, '')
+			.replace(/_+/g, ' ')
+			.replace(/\s+/g, ' ')
+			.trim() || name
+	)
+}
+
+/** The title tag when naming by title and the file has one, else the file name */
+export function displayName(sound: Pick<CachedSound, 'name' | 'title'>, source: NameSource): string {
+	return (source === 'title' && sound.title?.trim()) || fileLabel(sound.name)
 }
 
 const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true })
@@ -112,10 +123,10 @@ export class SoundCache {
 		return !prev || prev.title !== sound.title || prev.count !== sound.count
 	}
 
-	sorted(order: SortOrder): CachedSound[] {
+	sorted(order: SortOrder, names: NameSource): CachedSound[] {
 		const list = [...this.sounds.values()]
 		const alpha = (a: CachedSound, b: CachedSound) =>
-			collator.compare(displayName(a), displayName(b)) || collator.compare(a.name, b.name)
+			collator.compare(displayName(a, names), displayName(b, names)) || collator.compare(a.name, b.name)
 		return list.sort(order === 'plays' ? (a, b) => b.count - a.count || alpha(a, b) : alpha)
 	}
 

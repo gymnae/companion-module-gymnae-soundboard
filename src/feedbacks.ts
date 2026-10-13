@@ -4,7 +4,7 @@ import type ModuleInstance from './main.js'
 export type NowPlayingSource = 'auto' | 'sound' | 'stream'
 
 export type FeedbacksSchema = {
-	cover: { type: 'advanced'; options: { sound: string } }
+	cover: { type: 'advanced'; options: { sound: string; hide_text: boolean } }
 	cover_image: { type: 'value'; options: { sound: string }; result: string }
 	playing: { type: 'boolean'; options: { sound: string } }
 	any_playing: { type: 'boolean'; options: Record<string, never> }
@@ -24,13 +24,22 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			name: 'Sound cover art',
 			description:
 				'Shows the cover embedded in the sound file as button image. Updates when the cover changes; cached while the soundboard is offline.',
-			options: [self.soundOption('Sound')],
-			affectedProperties: ['png64'],
+			options: [
+				self.soundOption('Sound'),
+				{
+					type: 'checkbox',
+					id: 'hide_text',
+					label: 'Hide button text while the cover is shown',
+					default: false,
+				},
+			],
+			affectedProperties: ['png64', 'text'],
 			callback: (feedback) => {
 				const name = String(feedback.options.sound ?? '')
 				self.useSound(`feedback:${feedback.id}`, name)
 				const cover = self.coverFor(name)
-				return cover ? { png64: cover } : {}
+				if (!cover) return {}
+				return feedback.options.hide_text ? { png64: cover, text: '' } : { png64: cover }
 			},
 			unsubscribe: (feedback) => {
 				self.releaseSound(`feedback:${feedback.id}`)

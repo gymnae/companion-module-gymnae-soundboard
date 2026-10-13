@@ -11,16 +11,17 @@ export function UpdatePresets(self: ModuleInstance): void {
 	const presets: CompanionPresetDefinitions<ModuleSchema> = {}
 	const soundIds: string[] = []
 
-	for (const sound of self.cache.sorted(self.config.sort)) {
+	for (const sound of self.cache.sorted(self.config.sort, self.config.names)) {
 		const id = `sound:${sound.name}`
-		const label = displayName(sound)
+		const label = displayName(sound, self.config.names)
 		soundIds.push(id)
 		presets[id] = {
 			type: 'simple',
 			name: label,
 			keywords: [sound.name, sound.artist, sound.album].filter((k): k is string => !!k),
 			style: {
-				text: label,
+				// The cover feedback also hides the text once a cover loads, for sounds that get one later
+				text: sound.has_cover ? '' : label,
 				size: '14',
 				color: WHITE,
 				bgcolor: BLACK,
@@ -30,8 +31,12 @@ export function UpdatePresets(self: ModuleInstance): void {
 			},
 			steps: [{ down: [{ actionId: 'play', options: { sound: sound.name } }], up: [] }],
 			feedbacks: [
-				{ feedbackId: 'cover', options: { sound: sound.name } },
-				{ feedbackId: 'playing', options: { sound: sound.name }, style: { color: PLAYING, text: `▶ ${label}` } },
+				{ feedbackId: 'cover', options: { sound: sound.name, hide_text: true } },
+				{
+					feedbackId: 'playing',
+					options: { sound: sound.name },
+					style: { color: PLAYING, text: sound.has_cover ? '▶' : `▶ ${label}` },
+				},
 			],
 		}
 	}

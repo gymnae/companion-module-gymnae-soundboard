@@ -42,6 +42,7 @@ function withDefaults(config: ModuleConfig): ModuleConfig {
 		...config,
 		url: typeof config.url === 'string' ? config.url : DEFAULT_URL,
 		sort: config.sort === 'plays' ? 'plays' : 'alpha',
+		names: config.names === 'title' ? 'title' : 'file',
 		metaInterval: num(config.metaInterval, 30, 5),
 		statusInterval: num(config.statusInterval, 1000, 0),
 		timeout: num(config.timeout, 3000, 250),
@@ -212,15 +213,15 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	// --- definitions -----------------------------------------------------------------------------
 
 	#choiceLabel(sound: CachedSound): string {
-		const name = displayName(sound)
-		const label = sound.title?.trim() ? `${name} (${sound.name})` : name
+		const name = displayName(sound, this.config.names)
+		const label = this.config.names === 'title' && sound.title?.trim() ? `${name} (${sound.name})` : name
 		return this.config.sort === 'plays' ? `${label} – ${sound.count}×` : label
 	}
 
 	/** Dropdown listing the known sounds in the configured order. Custom values allow file names and stream URLs. */
 	soundOption(label: string): CompanionInputFieldDropdown<'sound'> {
 		const choices = this.cache
-			.sorted(this.config.sort)
+			.sorted(this.config.sort, this.config.names)
 			.map((sound) => ({ id: sound.name, label: this.#choiceLabel(sound) }))
 		return {
 			type: 'dropdown',
@@ -238,8 +239,9 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		const key = JSON.stringify([
 			this.label,
 			this.config.sort,
+			this.config.names,
 			this.cache
-				.sorted(this.config.sort)
+				.sorted(this.config.sort, this.config.names)
 				.map((sound) => [sound.name, this.#choiceLabel(sound), sound.artist, sound.album]),
 		])
 		if (!force && key === this.#definitionsKey) return
@@ -257,7 +259,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 			last_update: this.#lastUpdate ? new Date(this.#lastUpdate).toISOString() : '',
 			playing: this.anyPlaying,
 			now_playing_name: sound?.name ?? '',
-			now_playing_title: sound ? displayName(sound) : '',
+			now_playing_title: sound ? displayName(sound, this.config.names) : '',
 			now_playing_artist: sound?.artist ?? '',
 			stream_title: this.nowPlaying?.stream?.title ?? '',
 		})
