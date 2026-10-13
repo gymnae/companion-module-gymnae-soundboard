@@ -69,6 +69,8 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	client: SoundboardClient | null = null
 	nowPlaying: NowPlaying | null = null
 	anyPlaying = false
+	/** Sound files playing right now; sounds can overlap */
+	#playingSounds = new Set<string>()
 
 	/** Sound used by each placed play action / cover feedback, keyed `action:<id>` or `feedback:<id>` */
 	readonly #uses = new Map<string, string>()
@@ -157,6 +159,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.#online = null
 		this.nowPlaying = null
 		this.anyPlaying = false
+		this.#playingSounds = new Set()
 		this.#streamImage = null
 
 		// Definitions come from the cache first, so buttons can be set up while the soundboard is offline
@@ -284,6 +287,10 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		const playing = this.nowPlaying?.sound?.name
 		if (playing) names.add(playing)
 		return names
+	}
+
+	isPlaying(name: string): boolean {
+		return this.#playingSounds.has(name.trim())
 	}
 
 	coverFor(name: string): string | null {
@@ -461,9 +468,22 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		const stream = this.nowPlaying?.stream
 		const streamUrl = stream?.has_thumbnail ? stream.thumbnail_url : null
 
+		const playing = new Set(
+			Array.isArray(status.playing_sounds)
+				? status.playing_sounds.filter((name) => typeof name === 'string')
+				: sound
+					? [sound]
+					: [],
+		)
+		const previousPlaying = this.#playingSounds
+		this.#playingSounds = playing
+		if (playing.size !== previousPlaying.size || [...playing].some((name) => !previousPlaying.has(name))) {
+			this.checkFeedbacks('playing')
+		}
+
 		if (sound !== previousSound) {
 			if (sound) this.#ensureLoaded(sound)
-			this.checkFeedbacks('playing', 'now_playing_cover')
+			this.checkFeedbacks('now_playing_cover')
 		}
 		if (streamUrl !== previousStream) {
 			this.#streamImage = streamUrl ? { url: streamUrl, data: null } : null

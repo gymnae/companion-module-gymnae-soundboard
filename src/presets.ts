@@ -1,5 +1,6 @@
 import {
 	ButtonGraphicsDecorationType,
+	ButtonGraphicsShowStatusIcons,
 	combineRgb,
 	type CompanionPresetDefinitions,
 	type CompanionPresetSection,
@@ -37,7 +38,11 @@ export function UpdatePresets(self: ModuleInstance): void {
 					type: 'layered',
 					name: label,
 					keywords,
-					canvas: { decoration: ButtonGraphicsDecorationType.None },
+					// No status icons: the "action running" arrow would flash on every press
+					canvas: {
+						decoration: ButtonGraphicsDecorationType.None,
+						showStatusIcons: ButtonGraphicsShowStatusIcons.None,
+					},
 					elements: [
 						{ id: 'background', name: 'Background', type: 'box', color: BLACK },
 						{ id: 'cover', name: 'Cover', type: 'image', base64Image: null, fillMode: 'fit' },

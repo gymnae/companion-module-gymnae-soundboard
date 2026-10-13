@@ -87,6 +87,8 @@ export function createFakeSoundboard(prefix = '') {
 		if (path === '/status')
 			return json({
 				playing: !!(state.playing || state.stream),
+				// Older soundboards have no playing_sounds; JSON drops the undefined key
+				playing_sounds: state.oldStatus ? undefined : (state.playingSounds ?? (state.playing ? [state.playing] : [])),
 				now_playing: {
 					sound: state.playing
 						? {

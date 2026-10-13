@@ -25,6 +25,8 @@ export type NowPlaying = {
 export type SoundboardStatus = {
 	playing: boolean
 	now_playing?: NowPlaying
+	/** Every sound file still playing; missing on older soundboard versions, which only report the newest */
+	playing_sounds?: string[]
 }
 
 export type ImageData = { mime: string; data: string; etag: string | null }

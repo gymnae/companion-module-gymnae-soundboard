@@ -106,6 +106,21 @@ assert.ok(m.feedbacks.now_playing_cover.callback({ options: { source: 'auto' } }
 ok('play uses /play/<encoded file>, URLs go to /play_url; playing + now-playing feedbacks/variables follow /status')
 await assert.rejects(m.actions.play.callback({ options: { sound: 'missing.mp3' } }), /404/)
 ok('unknown file → action error with HTTP 404')
+// overlapping sounds: every one still playing is marked, not just the newest
+const isPlaying = (sound) => m.feedbacks.playing.callback({ options: { sound } })
+sb.state.playingSounds = ['b c.mp3', 'zebra.mp3']
+await until(() => isPlaying('b c.mp3'), 'overlapping sound marked')
+assert.equal(isPlaying('zebra.mp3'), true)
+assert.equal(isPlaying('airhorn.mp3'), false)
+sb.state.playingSounds = ['zebra.mp3']
+await until(() => !isPlaying('b c.mp3'), 'finished sound unmarked')
+assert.equal(isPlaying('zebra.mp3'), true)
+// older soundboards without playing_sounds: only the newest sound
+sb.state.oldStatus = true
+sb.state.playingSounds = null
+await until(() => isPlaying('zebra.mp3') && !isPlaying('b c.mp3'), 'fallback to now_playing')
+sb.state.oldStatus = false
+ok('overlapping sounds all show as playing (playing_sounds), older soundboards fall back to the newest')
 
 // 5. sort by plays (via config change), counts in labels
 await m.configUpdated({ ...base, sort: 'plays' })

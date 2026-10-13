@@ -7,6 +7,7 @@ export const InstanceStatus = {
 }
 export const combineRgb = (r, g, b, a) =>
 	((r << 16) | (g << 8) | b) + (a !== undefined && a >= 0 && a < 1 ? 0x1000000 * Math.round(255 * (1 - a)) : 0)
+export const ButtonGraphicsShowStatusIcons = { FollowDefault: 'default', ShowAll: 'all', None: 'none' }
 export const ButtonGraphicsDecorationType = {
 	FollowDefault: 'default',
 	TopBar: 'topbar',

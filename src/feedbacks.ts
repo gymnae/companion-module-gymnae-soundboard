@@ -63,13 +63,14 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 		playing: {
 			type: 'boolean',
 			name: 'Sound is playing',
-			description: 'True while this sound is the newest sound still playing',
+			description:
+				'True while this sound is playing, also when several sounds overlap. Soundboard versions without "playing_sounds" in /status only report the newest sound.',
 			options: [self.soundOption('Sound')],
 			defaultStyle: {
 				color: combineRgb(0, 0, 0),
 				bgcolor: combineRgb(0, 204, 0),
 			},
-			callback: (feedback) => self.nowPlaying?.sound?.name === String(feedback.options.sound ?? ''),
+			callback: (feedback) => self.isPlaying(String(feedback.options.sound ?? '')),
 		},
 		any_playing: {
 			type: 'boolean',

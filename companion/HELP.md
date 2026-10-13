@@ -27,7 +27,7 @@ Open **Presets → Sounds** and drag a sound onto a button. The button plays the
 
 - **Sound cover art**: uses the cover embedded in the file (MP3, M4A, FLAC, Ogg) as the button image. If the file has no cover, the button keeps its own style. With _Hide button text while the cover is shown_, the button text is cleared while a cover is displayed. On layered buttons, the button needs an image element for the cover to appear.
 - **Sound cover art (image data)**: the same image as base64 data, for an image element on layered buttons.
-- **Sound is playing**: true while the sound is the newest one still playing.
+- **Sound is playing**: true while the sound plays, also when several sounds overlap. Soundboard versions that don't list `playing_sounds` in `/status` only report the newest sound.
 - **Anything is playing**
 - **Now playing cover art**: the cover of the current sound, or the thumbnail of the running web stream.
 
