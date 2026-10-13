@@ -1,11 +1,21 @@
-import { combineRgb, type CompanionPresetDefinitions, type CompanionPresetSection } from '@companion-module/base'
+import {
+	ButtonGraphicsDecorationType,
+	combineRgb,
+	type CompanionPresetDefinitions,
+	type CompanionPresetSection,
+} from '@companion-module/base'
 import { displayName } from './cache.js'
 import type { ModuleSchema } from './main.js'
 import type ModuleInstance from './main.js'
 
 const WHITE = combineRgb(255, 255, 255)
 const BLACK = combineRgb(0, 0, 0)
+const TRANSPARENT = combineRgb(0, 0, 0, 0)
 const PLAYING = combineRgb(0, 255, 0)
+/** Percent of the element height; matches the 14pt text of the simple variant */
+const LABEL_SIZE = 23
+/** Percent of the button size, about 6 px on a 72 px button */
+const FRAME_WIDTH = 8
 
 export function UpdatePresets(self: ModuleInstance): void {
 	const presets: CompanionPresetDefinitions<ModuleSchema> = {}
@@ -15,27 +25,84 @@ export function UpdatePresets(self: ModuleInstance): void {
 		const id = `sound:${sound.name}`
 		const label = displayName(sound, self.config.names)
 		soundIds.push(id)
+		const keywords = [sound.name, sound.artist, sound.album].filter((k): k is string => !!k)
+		// The cover feedback also hides the text once a cover loads, for sounds that get one later
+		const text = sound.has_cover ? '' : label
+		const steps = [{ down: [{ actionId: 'play' as const, options: { sound: sound.name } }], up: [] }]
 		presets[id] = {
-			type: 'simple',
-			name: label,
-			keywords: [sound.name, sound.artist, sound.album].filter((k): k is string => !!k),
-			style: {
-				// The cover feedback also hides the text once a cover loads, for sounds that get one later
-				text: sound.has_cover ? '' : label,
-				size: '14',
-				color: WHITE,
-				bgcolor: BLACK,
-				alignment: 'center:bottom',
-				pngalignment: 'center:center',
-				show_topbar: false,
-			},
-			steps: [{ down: [{ actionId: 'play', options: { sound: sound.name } }], up: [] }],
-			feedbacks: [
-				{ feedbackId: 'cover', options: { sound: sound.name, hide_text: true } },
+			type: 'alternatives',
+			variants: [
 				{
-					feedbackId: 'playing',
-					options: { sound: sound.name },
-					style: { color: PLAYING, text: sound.has_cover ? '▶' : `▶ ${label}` },
+					// Layered: a green frame drawn over the cover while the sound plays
+					type: 'layered',
+					name: label,
+					keywords,
+					canvas: { decoration: ButtonGraphicsDecorationType.None },
+					elements: [
+						{ id: 'background', name: 'Background', type: 'box', color: BLACK },
+						{ id: 'cover', name: 'Cover', type: 'image', base64Image: null, fillMode: 'fit' },
+						{
+							id: 'label',
+							name: 'Name',
+							type: 'text',
+							text,
+							fontsize: LABEL_SIZE,
+							fontsizeAllowShrink: true,
+							color: WHITE,
+							halign: 'center',
+							valign: 'bottom',
+						},
+						{
+							id: 'frame',
+							name: 'Playing frame',
+							type: 'box',
+							enabled: false,
+							color: TRANSPARENT,
+							borderWidth: FRAME_WIDTH,
+							borderColor: PLAYING,
+							borderPosition: 'inside',
+						},
+					],
+					steps,
+					feedbacks: [
+						{
+							feedbackId: 'cover',
+							options: { sound: sound.name, hide_text: true },
+							styleOverrides: [
+								{ elementId: 'cover', elementProperty: 'base64Image', override: 'png64' },
+								{ elementId: 'label', elementProperty: 'text', override: 'text' },
+							],
+						},
+						{
+							feedbackId: 'playing',
+							options: { sound: sound.name },
+							styleOverrides: [{ elementId: 'frame', elementProperty: 'enabled', override: true }],
+						},
+					],
+				},
+				{
+					// For hosts without layered buttons: no frame possible, so the text turns green with a ▶
+					type: 'simple',
+					name: label,
+					keywords,
+					style: {
+						text,
+						size: '14',
+						color: WHITE,
+						bgcolor: BLACK,
+						alignment: 'center:bottom',
+						pngalignment: 'center:center',
+						show_topbar: false,
+					},
+					steps,
+					feedbacks: [
+						{ feedbackId: 'cover', options: { sound: sound.name, hide_text: true } },
+						{
+							feedbackId: 'playing',
+							options: { sound: sound.name },
+							style: { color: PLAYING, text: sound.has_cover ? '▶' : `▶ ${label}` },
+						},
+					],
 				},
 			],
 		}

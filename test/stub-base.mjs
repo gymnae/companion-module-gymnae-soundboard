@@ -5,7 +5,14 @@ export const InstanceStatus = {
 	ConnectionFailure: 'connection_failure',
 	BadConfig: 'bad_config',
 }
-export const combineRgb = (r, g, b) => (r << 16) | (g << 8) | b
+export const combineRgb = (r, g, b, a) =>
+	((r << 16) | (g << 8) | b) + (a !== undefined && a >= 0 && a < 1 ? 0x1000000 * Math.round(255 * (1 - a)) : 0)
+export const ButtonGraphicsDecorationType = {
+	FollowDefault: 'default',
+	TopBar: 'topbar',
+	Border: 'border',
+	None: 'none',
+}
 export class InstanceBase {
 	constructor() {
 		this.calls = []

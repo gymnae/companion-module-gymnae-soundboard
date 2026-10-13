@@ -20,6 +20,8 @@ export type ModuleConfig = {
 }
 
 export const DEFAULT_URL = 'http://127.0.0.1:5000'
+/** Twice Companion's 72 px button, so covers stay sharp on larger surfaces such as Loupedeck (90 px) or Stream Deck+ (120 px) */
+export const DEFAULT_COVER_SIZE = 144
 
 export function GetConfigFields(): SomeCompanionConfigField[] {
 	return [
@@ -92,9 +94,9 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			id: 'coverSize',
 			label: 'Cover size (pixels)',
 			description:
-				"Covers are fetched scaled down to fit this many pixels. 72 is Companion's standard button size; raise it if covers look soft on larger buttons.",
+				'Covers are fetched scaled down to fit this many pixels. 144 stays sharp on buttons up to 144 px (Loupedeck 90, Stream Deck+ 120); 72 is enough for a standard Stream Deck and keeps the saved cache smaller.',
 			width: 6,
-			default: 72,
+			default: DEFAULT_COVER_SIZE,
 			min: 16,
 			max: 1024,
 		},

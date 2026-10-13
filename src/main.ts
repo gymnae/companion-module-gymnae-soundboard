@@ -4,7 +4,7 @@ import {
 	type CompanionInputFieldDropdown,
 	type SomeCompanionConfigField,
 } from '@companion-module/base'
-import { GetConfigFields, normalizeBaseUrl, DEFAULT_URL, type ModuleConfig } from './config.js'
+import { GetConfigFields, normalizeBaseUrl, DEFAULT_COVER_SIZE, DEFAULT_URL, type ModuleConfig } from './config.js'
 import { UpdateVariableDefinitions, type VariablesSchema } from './variables.js'
 import { UpgradeScripts } from './upgrades.js'
 import { UpdateActions, type ActionsSchema } from './actions.js'
@@ -46,7 +46,7 @@ function withDefaults(config: ModuleConfig): ModuleConfig {
 		metaInterval: num(config.metaInterval, 30, 5),
 		statusInterval: num(config.statusInterval, 1000, 0),
 		timeout: num(config.timeout, 3000, 250),
-		coverSize: Math.min(1024, Math.round(num(config.coverSize, 72, 16))),
+		coverSize: Math.min(1024, Math.round(num(config.coverSize, DEFAULT_COVER_SIZE, 16))),
 	}
 }
 

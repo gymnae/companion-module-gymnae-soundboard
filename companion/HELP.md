@@ -8,7 +8,7 @@ Plays sounds on a [Mumble Soundboard](https://github.com/gymnae/mumblesoundboard
 - **Name sounds by**: _File name_ (default) or _Title tag_. File names are shown without extension and with underscores as spaces, so long names wrap on buttons. Title tags are often placeholders such as "Untitled Project" or the game a clip came from; with _Title tag_, sounds without one still use the file name.
 - **Order sounds by**: _Alphabet_ or _Number of plays_. This sets the order of the sound lists in actions, feedbacks and presets. With _Number of plays_, the lists also show the play counts.
 - **Metadata refresh**: how often the sound list, play counts and covers are re-read (default 30 s).
-- **Cover size**: covers and stream thumbnails are requested scaled down to fit this many pixels (default 72, Companion's standard button size). Raise it if covers look soft on larger buttons. Changing it refetches the covers. Soundboard versions without the `?size=` option ignore it and send full-size covers.
+- **Cover size**: covers and stream thumbnails are requested scaled down to fit this many pixels (default 144). That keeps covers sharp on buttons up to 144 px, such as Loupedeck (90 px) or Stream Deck+ (120 px). On a standard Stream Deck, 72 is enough. Raise it if covers still look soft. Changing it refetches the covers. Soundboard versions without the `?size=` option ignore it and send full-size covers.
 - **Now-playing poll**: how often `/status` is read for the _playing_ feedbacks and the now-playing variables (default 1000 ms, 0 = off).
 
 ### Quick start

@@ -37,7 +37,7 @@ await until(() => m.calls.some((c) => c[0] === 'checkById' && c.includes('fb1'))
 r = m.feedbacks.cover.callback({ id: 'fb1', options: { sound: 'zebra.mp3' } })
 assert.equal(Buffer.from(r.png64, 'base64').subarray(0, 4).toString('hex'), '89504e47')
 assert.ok(sb.state.requests.includes('/meta/zebra.mp3'))
-assert.ok(sb.state.requests.includes('/cover/zebra.mp3?size=72'), 'cover requested at button size')
+assert.ok(sb.state.requests.includes('/cover/zebra.mp3?size=144'), 'cover requested at default size')
 ok('new cover feedback polls /meta/<file> + /cover/<file> and gets png64')
 // no cover → no image, button keeps own style
 m.feedbacks.cover.callback({ id: 'fb2', options: { sound: 'b c.mp3' } })
@@ -48,10 +48,30 @@ r = m.feedbacks.cover.callback({ id: 'fb3', options: { sound: 'zebra.mp3', hide_
 assert.ok(r.png64)
 assert.equal(r.text, '')
 assert.deepEqual(m.feedbacks.cover.callback({ id: 'fb4', options: { sound: 'b c.mp3', hide_text: true } }), {})
-assert.equal(m.presets['sound:zebra.mp3'].style.text, '')
-assert.equal(m.presets['sound:b c.mp3'].style.text, 'b c')
-assert.equal(m.presets['sound:zebra.mp3'].feedbacks[1].style.text, '▶')
-ok('hide_text clears the text only while a cover is shown; presets show no text for sounds with a cover')
+const variants = (id) => m.presets[id].variants
+const element = (id, el) => variants(id)[0].elements.find((e) => e.id === el)
+assert.deepEqual(
+	variants('sound:zebra.mp3').map((v) => v.type),
+	['layered', 'simple'],
+)
+assert.equal(element('sound:zebra.mp3', 'label').text, '')
+assert.equal(element('sound:b c.mp3', 'label').text, 'b c')
+assert.equal(element('sound:zebra.mp3', 'frame').enabled, false)
+assert.equal(element('sound:zebra.mp3', 'frame').borderColor, 0x00ff00)
+const [coverFb, playingFb] = variants('sound:zebra.mp3')[0].feedbacks
+assert.deepEqual(
+	coverFb.styleOverrides.map((o) => [o.elementId, o.elementProperty, o.override]),
+	[
+		['cover', 'base64Image', 'png64'],
+		['label', 'text', 'text'],
+	],
+)
+assert.deepEqual(playingFb.styleOverrides, [{ elementId: 'frame', elementProperty: 'enabled', override: true }])
+assert.equal(variants('sound:zebra.mp3')[1].style.text, '')
+assert.equal(variants('sound:zebra.mp3')[1].feedbacks[1].style.text, '▶')
+ok(
+	'hide_text clears the text only while a cover is shown; layered preset (cover, name, green frame while playing) + simple fallback',
+)
 const client = new SoundboardClient(`http://127.0.0.1:${sb.port}`, 1000)
 assert.equal((await client.getImage('/cover/b%20c.mp3', { size: 72 })).kind, 'none')
 ok('sized fallback (PNG vinyl, X-Cover-Source: default) is also treated as "no cover"')
@@ -67,7 +87,7 @@ assert.ok(m.calls.some((c) => c[0] === 'checkById' && c.includes('fb1')))
 const n304 = sb.state.requests.length
 const redraws = m.calls.length
 await m.refreshMeta()
-assert.ok(sb.state.requests.slice(n304).includes('/cover/zebra.mp3?size=72'))
+assert.ok(sb.state.requests.slice(n304).includes('/cover/zebra.mp3?size=144'))
 assert.equal(
 	m.calls.filter((c) => c[0] === 'checkById').length,
 	m.calls.slice(0, redraws).filter((c) => c[0] === 'checkById').length,
@@ -102,11 +122,11 @@ ok('sort by number of plays: ' + m.actions.play.options[0].choices.map((c) => c.
 // 5b. naming: file name by default (underscores as spaces), title tag on request
 assert.equal(fileLabel('werner_-_beinhart_-_einn_noch.wav'), 'werner - beinhart - einn noch')
 assert.equal(fileLabel('a__b  c.mp3'), 'a b c')
-assert.equal(m.presets['sound:zebra.mp3'].name, 'zebra')
+assert.equal(m.presets['sound:zebra.mp3'].variants[0].name, 'zebra')
 await m.configUpdated({ ...base, sort: 'alpha', names: 'title' })
 assert.equal(m.actions.play.options[0].choices.find((c) => c.id === 'zebra.mp3').label, 'Zebra (zebra.mp3)')
 assert.equal(m.actions.play.options[0].choices.find((c) => c.id === 'b c.mp3').label, 'b c')
-assert.equal(m.presets['sound:zebra.mp3'].name, 'Zebra')
+assert.equal(m.presets['sound:zebra.mp3'].variants[0].name, 'Zebra')
 await m.configUpdated({ ...base, sort: 'plays' })
 ok('names: file name by default, title tag (with file name) when "Name sounds by" is title')
 
